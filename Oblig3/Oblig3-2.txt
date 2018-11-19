@@ -1,0 +1,89 @@
+	.extern	fread, fwrite
+
+	.text
+	.globl	readbyte
+	.globl	_readbyte
+ # Navn:	readbyte
+ # Synopsis:	Leser en byte fra en binÃ¦rfil.
+ # C-signatur: 	int readbyte (FILE *f)
+ # Registre:
+	
+readbyte:
+_readbyte:
+	pushl	%ebp		# Standard funksjonsstart
+	movl	%esp,%ebp	#
+	
+	pushl	%ebp		# Standard funksjonsstart
+	movl	%esp,%ebp	#
+	subl	$32,%esp
+	movl	%edi,-24(%ebp)	#
+	movl	%fs:40,%ebx		# adressen til FILE f*
+    movl	%ebx,-8(%ebp)	#
+    xorl	%eax,%eax		#setter %eax = 0
+    
+#status = fread(&c,1,1,f);
+	movl	-24(%ebp),%edx
+	leal	-13(%ebp),%ebx	#lagrer adressen til c
+	movl	%edx,%ecx		#f
+	movl	$1,%edx		#1
+    movl	$1,%esi		#1
+    movl	%ebx,%edi	#&c
+	call	_fread
+	movl	%eax,-12(%ebp)
+	
+#i f(status <= 0) return -1;
+	cmpl	$0,-12(%ebp)	#sjekk om null
+	jg		.HentByte		#Hopp ved > 0
+	movl	$-1,%eax		#returverdien
+    jmp		.rb_x			#retur
+    
+.HentByte:			
+	movzbl	-13(%ebp),%eax	#konverterer
+	movsbl	%al,%eax		#blir gjort om til 32-bits
+
+rb_x:	
+	addl 	$32,%esp	#fjerner parametere	
+	popl	%esi
+	popl 	%edi
+	popl	%ebp	# Standard
+	popl	%ebp		# Standard
+	ret			# retur.
+
+	.globl	readutf8char
+ # Navn:	readutf8char
+ # Synopsis:	Leser et Unicode-tegn fra en binÃ¦rfil.
+ # C-signatur: 	long readutf8char (FILE *f)
+ # Registre:
+	
+readutf8char:
+	pushl	%ebp		# Standard funksjonsstart
+	movl	%esp,%ebp	#
+
+	popl	%ebp		# Standard
+	ret			# retur.
+
+	.globl	writebyte
+ # Navn:	writebyte
+ # Synopsis:	Skriver en byte til en binÃ¦rfil.
+ # C-signatur: 	void writebyte (FILE *f, unsigned char b)
+ # Registre:
+	
+writebyte:
+	pushl	%ebp		# Standard funksjonsstart
+	movl	%esp,%ebp	#
+
+	popl	%ebp		# Standard
+	ret			# retur.
+
+	.globl	writeutf8char
+ # Navn:	writeutf8char
+ # Synopsis:	Skriver et tegn kodet som UTF-8 til en binÃ¦rfil.
+ # C-signatur: 	void writeutf8char (FILE *f, unsigned long u)
+ # Registre:
+	
+writeutf8char:
+	pushl	%ebp		# Standard funksjonsstart
+	movl	%esp,%ebp	#
+
+wu8_x:	popl	%ebp		# Standard
+	ret			# retur.
