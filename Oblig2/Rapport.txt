@@ -1,0 +1,98 @@
+Mini CPU yast
+
+Hovedkretsen, main, er satt opp disse komponentene:
+- RAM: Dataminne
+	* Hentet fra biblioteket til Logisim.
+	* Inn i A (Adresse), går bit 0-3 av dataen til instruksjonminne som fungerer som adresse ved instruksjon "1010" eller "1011". Inn i D (Data) går det en system-buss 
+		som er koblet til inngangen og utgangen av registeret (R). 
+	* Dersom instruksjonen er "1010" --> aktiveres Select og Load
+	* Hvis instruksjonen er "1011" --> aktiveres kun Select. 
+	* Klokke inngangen er koblet til samme klokke som counteren og registeret. Slik at de
+		er synkronisert.
+- RAM: Instruksjonsminne
+	* Hentet fra biblioteket til Logisim.
+	* Inn i A (Adresse), går en teller som teller opp fra 0 (Binær: 0000) til 15 (Binær: 1111) som velger hvilken instruksjon som skal utføres.
+	* Instruksjonen går ut fra D (Data) og inn i en splitter som deler opp instruksjonen i to deler på 4-bit, hvor bit 4-7 representerer instruksjonen som skal dekodes, 
+		og bit 0-3 representerer dataen/adressen som instruksjonen benytter. 
+	* Select og load er alltid aktivert.
+
+- Teller: Instruksjonspeker
+	* Tar imot to input; et klokkesignal og en input som resetter counteren ved aktivering.
+	* Satt sammen av et register og en adder. Adderen tar imot input fra registeret og konstanten "1", og sender output tilbake til registeret. Adderen har også en carry 
+	 invertert koblet til registerets "enable", slik at når "1111 + 1" skjer så deaktiveres registeret og telleren stopper å telle. Registeret tar imot input en gang
+	 pr. klokkesykel.
+- Re: Reset-knapp for telleren.
+	* Knapp hentet fra biblioteket til Logisim
+	* Sender inn verdi 1 til tellerens input "reset"
+	* Starter telleren på nytt
+
+Begge testene fungerte da jeg flyttet alt som fra Data Instr. inn i main, og lagde en egen krets for dekoderen. Tror noen av outputen var feilkoblet. Jeg prøvde først å rette på det med reset-knappen, men fikk fortsatt feil verdi ved 1010.
+- Data Instr.: satt sammen av flere komponenter (Som nå ligger i main)
+	* Decd: Dekoding av instruksjon
+		- Hentet fra biblioteket til Logisim.
+		- Tar inn 4-bits (instruksjonen som skal utføres)
+		- Aktiverer en av 4 outputs basert på instruksjonen.
+		- Her blir bare minterm 8,9,10 og 11 brukt.
+	* Overwrite (OW LSB/MSB): Komponent for å overskrive 4 LSB/MSB
+		- Tar inn 8-bits
+		 	* den initielle verdien på 4-bit, som skal leses inn i 8-bits verdien
+		 	* en switch som bestemmer om det er LSB eller MSB som skal leses over.
+		 		- Når switch = 0 så er det en LSB som overskrives.
+		 		- Når switch = 1 så er det en MSB som overskrives.
+		 - Output:  den initielle 8-bits verdien hvor de 4 LSB/MSB er overskrevet av 
+		 	4-bits verdien som også er gitt som input.
+	* Register: CPU-register
+		- Hentet fra biblioteket til Logisim.
+		- Output Q er koblet til seg selv, gjennom Overwrite, og til output R
+		- Input D er koblet til output R og Overwrite.
+		- Enable blir aktivert når instruksjonen "1000", "1001" eller "1010" utføres-
+LOGG TESTFIL 1:
+v2.0 raw
+85 97 B1 81 94 A1 00 00
+00 00 00 00 00 00 00 00
+Clock(90,260)	RAM(580,380)[0]	RAM(580,380)[1]	RAM(580,380)[2]	RAM(580,380)[3]	RAM(580,380)[4]	RAM(580,380)[5]	RAM(580,380)[6]	RAM(580,380)[7]	R	Teller.Register(200,180)
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	1000
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	1000
+0	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000
+1	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000
+0	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0101	0001
+1	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0101	0001
+0	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0010
+1	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0010
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0011
+1	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0011
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0001	0100
+1	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0001	0100
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0100 0001	0101
+1	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0100 0001	0101
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0110
+1	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0110
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0111
+1	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	0111
+0	0000 0000	0111 0101	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0111 0101	1000
+
+
+LOGG TESTFIL 2:
+v2.0 raw
+8C 9D B0 B3 81 91 A0 B4
+00 00 00 00 00 00 00 00
+
+Clock(90,260)	RAM(580,380)[0]	RAM(580,380)[1]	RAM(580,380)[2]	RAM(580,380)[3]	RAM(580,380)[4]	RAM(580,380)[5]	RAM(580,380)[6]	RAM(580,380)[7]	R	Teller.Register(200,180)
+1	1101 1100	0000 0000	0000 0000	1101 1100	1101 1100	0000 0000	0000 0000	0000 0000	1101 1100	1111
+1	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000
+0	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 1100	0001
+1	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 1100	0001
+0	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	1101 1100	0010
+1	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	1101 1100	0010
+0	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	0000 0000	1101 1100	0011
+1	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	1101 1100	0011
+0	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	1101 1100	0100
+1	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	1101 1100	0100
+0	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	1101 0001	0101
+1	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	1101 0001	0101
+0	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	0001 0001	0110
+1	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	0001 0001	0110
+0	1101 1100	0000 0000	0000 0000	1101 1100	0000 0000	0000 0000	0000 0000	0000 0000	1101 1100	0111
+1	1101 1100	0000 0000	0000 0000	1101 1100	1101 1100	0000 0000	0000 0000	0000 0000	1101 1100	0111
+0	1101 1100	0000 0000	0000 0000	1101 1100	1101 1100	0000 0000	0000 0000	0000 0000	1101 1100	1000
+0	1101 1100	0000 0000	0000 0000	1101 1100	1101 1100	0000 0000	0000 0000	0000 0000	1101 1100	1000
